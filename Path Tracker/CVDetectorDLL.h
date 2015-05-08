@@ -1,26 +1,29 @@
-#ifdef MATHFUNCSDLL_EXPORTS
-#define MATHFUNCSDLL_API __declspec(dllexport) 
+#ifdef SIGNDETECTORSDLL_EXPORTS
+#define SIGNDETECTORSDLL_API __declspec(dllexport) 
 #else
-#define MATHFUNCSDLL_API __declspec(dllimport) 
+#define SIGNDETECTORSDLL_API __declspec(dllimport) 
 #endif
 
-namespace MathFuncs
+namespace CVDetector
 {
-    // This class is exported from the MathFuncsDll.dll
-    class MyMathFuncs
+    class SignDetector
     {
     public: 
-        // Returns a + b
-        static MATHFUNCSDLL_API double Add(double a, double b); 
+        // Returns -1 if failed, 0 if OK
+        static SIGNDETECTORSDLL_API int initialiseDetector(); 
 
-        // Returns a - b
-        static MATHFUNCSDLL_API double Subtract(double a, double b); 
+        static SIGNDETECTORSDLL_API void detectSigns(); 
 
-        // Returns a * b
-        static MATHFUNCSDLL_API double Multiply(double a, double b); 
-
-        // Returns a / b
-        // Throws const std::invalid_argument& if b is 0
-        static MATHFUNCSDLL_API double Divide(double a, double b); 
+        // Returns sign ID found by the detector (0, 1 or 2)
+        static SIGNDETECTORSDLL_API int getFoundSign(); 
     };
+
+	class RoadTracker
+	{
+		public: 
+        static SIGNDETECTORSDLL_API void doTracking(); 
+
+        // Returns Y coordinate of the center of the detected patch
+        static SIGNDETECTORSDLL_API int getHorizontalAxis(); 
+	};
 }

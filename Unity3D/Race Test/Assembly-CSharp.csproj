@@ -46,16 +46,20 @@
 	</Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\CameraLook.cs" />
-     <Compile Include="Assets\CarController.cs" />
-     <Compile Include="Assets\SignDetector.cs" />
-     <Compile Include="Assets\TireToWheel.cs" />
+     <Compile Include="Assets\Scripts\CameraLook.cs" />
+     <Compile Include="Assets\Scripts\CarController.cs" />
+     <Compile Include="Assets\Scripts\SignDetector.cs" />
+     <Compile Include="Assets\Scripts\TireToWheel.cs" />
+     <Compile Include="Assets\Scripts\UIText.cs" />
      <None Include="Assets\classifier_disable.xml" />
      <None Include="Assets\classifier_enable.xml" />
      <None Include="Assets\Plugins\classifier_enable.xml" />
      <None Include="Assets\Plugins\classifier_disable.xml" />
  <Reference Include="UnityEngine.UI">
  <HintPath>D:/Programs/Unity3D_4.6.1/Data/UnityExtensions/Unity/GUISystem/4.6.1/UnityEngine.UI.dll</HintPath>
+ </Reference>
+ <Reference Include="System.Windows.Forms">
+ <HintPath>C:/Users/Public/Documents/Unity Projects/Race Test/Assets/System.Windows.Forms.dll</HintPath>
  </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

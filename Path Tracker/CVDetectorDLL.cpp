@@ -1,37 +1,42 @@
 #include <stdio.h>
 #include "CVDetectorDLL.h"
-#include <opencv2/core/core.hpp>
-#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/core/core.hpp"
+#include "opencv2/objdetect/objdetect.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 #include <tchar.h>
 #include <Windows.h>
 
-const int FRAME_WIDTH = 1366/2;
-const int FRAME_HEIGHT = 768/2;
-int H_MIN = 0;
-int H_MAX = 21;
-int S_MIN = 156;
-int S_MAX = 256;
-int V_MIN = 0;
-int V_MAX = 256;
-const int MAX_NUM_OBJECTS=50;
-const int MIN_OBJECT_AREA = 2000;
-const int MAX_OBJECT_AREA = FRAME_HEIGHT*FRAME_WIDTH/7;
-
 using namespace cv;
 
-namespace MathFuncs
+string window_name;
+String cascade_enable, cascade_disable;
+const int MAX_NUM_OBJECTS=50;
+const int MIN_OBJECT_AREA = 2000;
+int MAX_OBJECT_AREA;
+
+namespace CVDetector
 {
 	static HWND hDesktopWnd;
+	static CascadeClassifier *enable_cascade, *disable_cascade;
+	static int height,width;
+
+	string intToString(int number){
+		std::stringstream ss;
+		ss << number;
+		return ss.str();
+	}
 
 	Mat hwnd2mat(HWND hwnd){
 
 		HDC hwindowDC,hwindowCompatibleDC;
 
-		int height,width,srcheight,srcwidth;
+		int srcheight,srcwidth;
 		HBITMAP hbwindow;
 		Mat src;
 		BITMAPINFOHEADER  bi;
+
+
 
 		hwindowDC=GetDC(hwnd);
 		hwindowCompatibleDC=CreateCompatibleDC(hwindowDC);
@@ -42,10 +47,12 @@ namespace MathFuncs
 
 		srcheight = windowsize.bottom;
 		srcwidth = windowsize.right;
-		height = windowsize.bottom/2;  //change this to whatever size you want to resize to
-		width = windowsize.right/2;
+		height = windowsize.bottom;  //change this to whatever size you want to resize to
+		width = windowsize.right;
 
 		src.create(height,width,CV_8UC4);
+
+		MAX_OBJECT_AREA = height/2*width/7;
 
 		// create a bitmap
 		hbwindow = CreateCompatibleBitmap( hwindowDC, width, height);
@@ -73,35 +80,36 @@ namespace MathFuncs
 		return src;
 	}
 
-	void drawObject(int x, int y,Mat &frame){
+	int detectAndDisplay( Mat frame, CascadeClassifier enableCascade, CascadeClassifier disableCascade )
+	{
+		std::vector<Rect> enableSigns, disableSigns;
+		Mat frame_gray;
 
-		//use some of the openCV drawing functions to draw crosshairs
-		//on your tracked image!
+		cvtColor( frame, frame_gray, CV_BGR2GRAY );
+		equalizeHist( frame_gray, frame_gray );
 
-		//UPDATE:JUNE 18TH, 2013
-		//added 'if' and 'else' statements to prevent
-		//memory errors from writing off the screen (ie. (-25,-25) is not within the window!)
+		//-- Detect signs, load 'em up into appropriate arrays
+		enableCascade.detectMultiScale( frame_gray, enableSigns, 1.1, 2, 0|CV_HAAR_SCALE_IMAGE, Size(30, 30)  );
+		disableCascade.detectMultiScale( frame_gray, disableSigns, 1.1, 2, 0|CV_HAAR_SCALE_IMAGE, Size(30, 30));
+		for( size_t i = 0; i < enableSigns.size(); i++ )
+		{
+			Point center( enableSigns[i].x + enableSigns[i].width*0.5, enableSigns[i].y + enableSigns[i].height*0.5 );
+			ellipse( frame, center, Size( enableSigns[i].width*0.5, enableSigns[i].height*0.5), 0, 0, 360, Scalar( 255, 0, 255 ), 4, 8, 0 );
+		}
 
-		circle(frame,Point(x,y),20,Scalar(0,255,0),2);
-		if(y-25>0)
-			line(frame,Point(x,y),Point(x,y-25),Scalar(0,255,0),2);
-		else line(frame,Point(x,y),Point(x,0),Scalar(0,255,0),2);
-		if(y+25<FRAME_HEIGHT)
-			line(frame,Point(x,y),Point(x,y+25),Scalar(0,255,0),2);
-		else line(frame,Point(x,y),Point(x,FRAME_HEIGHT),Scalar(0,255,0),2);
-		if(x-25>0)
-			line(frame,Point(x,y),Point(x-25,y),Scalar(0,255,0),2);
-		else line(frame,Point(x,y),Point(0,y),Scalar(0,255,0),2);
-		if(x+25<FRAME_WIDTH)
-			line(frame,Point(x,y),Point(x+25,y),Scalar(0,255,0),2);
-		else line(frame,Point(x,y),Point(FRAME_WIDTH,y),Scalar(0,255,0),2);
+		//-- Show what you got
+		//imshow( window_name, frame ); // -----------> comment this for release
 
-		//putText(frame,intToString(x)+","+intToString(y),Point(x,y+30),1,1,Scalar(0,255,0),2);
-
+		if (enableSigns.size() > 0)
+			return 1;
+		if (disableSigns.size() > 0)
+			return 2;
+		// otherwise
+		return 0;
 	}
 
-	void trackFilteredObject(Mat thresholded, Mat frame){
-		int x, y;
+	int trackFilteredObject(Mat thresholded){
+		int x, y, axis = -2;
 		Mat temp;
 		thresholded.copyTo(temp);
 		//these two vectors needed for output of findContours
@@ -132,87 +140,94 @@ namespace MathFuncs
 						objectFound = true;
 						refArea = area;
 					}
-
-
 				}
-				//let user know you found an object
-				if(objectFound ==true){
-					putText(thresholded,"Tracking Object",Point(0,50),2,1,Scalar(0,255,0),2);
-					//draw object location on screen
-					drawObject(x,y,frame);
+				if(objectFound == true){
+					if( x > width/2 + 200)
+						axis = 1; //RIGHT
+					else if( x < width/2 - 200)
+						axis = -1; //RIGHT
+					else axis = 0; //STRAIGHT
 				}
-
-			}else putText(thresholded,"TOO MUCH NOISE! ADJUST FILTER",Point(0,50),1,2,Scalar(0,0,255),2);
+			}
 		}
+		return axis;
 	}
 
 	extern "C"{
-		__declspec(dllexport) double __cdecl MyMathFuncs::Add(double a, double b)
-		{	
-			printf("In C this would be %lf + %d = %lf\n",a,b,a+b);
-			return a + b;
-		}
 
-		__declspec(dllexport) double __cdecl MyMathFuncs::Subtract(double a, double b)
-		{
-			Mat dst, frame;
+		__declspec(dllexport) double signID;
+		__declspec(dllexport) int axisValue;
+
+		__declspec(dllexport) int __cdecl SignDetector::initialiseDetector()
+		{			
 			HDC hDesktopDC;
 			hDesktopWnd=GetDesktopWindow();
 			hDesktopDC=GetDC(hDesktopWnd);
-			VideoCapture vcap;
+			disable_cascade = new CascadeClassifier;
+			enable_cascade = new CascadeClassifier;
+			
+			window_name  = "Detecting ...";
+			cascade_enable = "classifier_enable.xml";
+			cascade_disable = "classifier_disable.xml";
+			if( !(*enable_cascade).load( cascade_enable ) ){ return -1; };
+			if( !(*disable_cascade).load( cascade_disable ) ){ return -1; };
 
+			// get the height and width of the screen
 			int height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 			int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 
 			// create a bitmap
 			HBITMAP hbDesktop = CreateCompatibleBitmap( hDesktopDC, width, height);
 
-			while(1){
-				frame = hwnd2mat(hDesktopWnd);
-				// Perform a Gaussian blur
-				GaussianBlur(frame, dst, Size( 15, 15), 0, 0);
-				//Convert to HSV
-				cvtColor(dst,dst,COLOR_BGR2HSV);
-				// Apply threshold to eliminate noise and emphasize filtered objects
-				inRange(dst,Scalar(H_MIN,S_MIN,V_MIN),Scalar(H_MAX,S_MAX,V_MAX),dst);
-				//erode and dilate with larger element so make sure object is nicely visible
-				Mat erodeElement = getStructuringElement( MORPH_RECT,Size(2,2));
-				Mat dilateElement = getStructuringElement( MORPH_RECT,Size(4,4));
-				erode(dst,dst,erodeElement);
-				erode(dst,dst,erodeElement);
-				dilate(dst,dst,dilateElement);
-				dilate(dst,dst,dilateElement);
-
-				// Perform Canny edge detection
-				//findContours(dst, dst, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-				//Canny(dst, dst, 1, 3);
-
-				trackFilteredObject(dst, frame);
-				// Show the processed image
-				imshow("Example3-out", dst);
-				imshow("Example3-in", frame);
-				waitKey(30); //this must be here or image will not be displayed :/
-
-			}
-
-
-			cvWaitKey(0);
-			return a-b;
+			/*while(1){ //----------->comment this for release mode
+				//detectSigns();
+				RoadTracker::doTracking();
+			}*/
+			
+			return 0;
 		}
 
-		__declspec(dllexport) double __cdecl MyMathFuncs::Multiply(double a, double b)
+		__declspec(dllexport) void __cdecl SignDetector::detectSigns()
 		{
-			return a * b;
+			Mat frame = hwnd2mat(hDesktopWnd);
+			signID = detectAndDisplay(frame, *enable_cascade, *disable_cascade);
+			waitKey(30); // -------------->uncomment this for debug mode
 		}
 
-		__declspec(dllexport) double __cdecl MyMathFuncs::Divide(double a, double b)
-		{
-			if (b == 0)
-			{
-				return -1;
-			}
+		__declspec(dllexport) void __cdecl RoadTracker::doTracking()
+		{			
+			Mat frame = hwnd2mat(hDesktopWnd);
+			Mat dst;
+			//Convert to HSV
+			cvtColor(frame,dst,COLOR_BGR2HSV);
+			// Apply threshold to eliminate noise and emphasize filtered objects
+			// These HSV values work best for Red color
+			inRange(dst,Scalar(0,156,0),Scalar(21,256,256),dst);
+			//erode and dilate with larger element so make sure object is nicely visible
+			Mat erodeElement = getStructuringElement( MORPH_RECT,Size(2,2));
+			Mat dilateElement = getStructuringElement( MORPH_RECT,Size(4,4));
+			erode(dst,dst,erodeElement);
+			erode(dst,dst,erodeElement);
+			dilate(dst,dst,dilateElement);
+			dilate(dst,dst,dilateElement);
+			axisValue = trackFilteredObject(dst);
+			printf("Axis value = %d\n",axisValue);
+			// Show the processed image
+			//imshow("Example3-out", dst);
+			//imshow("Example3-in", dst);
+			//waitKey(30); //this must be here or image will not be displayed :/
+			//... uncomment for debug mode
+			
+		}
 
-			return a / b;
+		__declspec(dllexport) int __cdecl SignDetector::getFoundSign()
+		{
+			return signID;
+		}
+
+		__declspec(dllexport) int __cdecl RoadTracker::getHorizontalAxis()
+		{
+			return axisValue;
 		}
 	}
 }
