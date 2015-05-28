@@ -51,6 +51,7 @@
      <Compile Include="Assets\Scripts\SignDetector.cs" />
      <Compile Include="Assets\Scripts\TireToWheel.cs" />
      <Compile Include="Assets\Scripts\UIText.cs" />
+     <Compile Include="Assets\StartGame.cs" />
      <None Include="Assets\classifier_disable.xml" />
      <None Include="Assets\classifier_enable.xml" />
      <None Include="Assets\Plugins\classifier_enable.xml" />

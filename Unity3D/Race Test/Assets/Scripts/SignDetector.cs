@@ -42,7 +42,9 @@ public class SignDetector : MonoBehaviour
         }
 
         detectionThread = new Thread(new ThreadStart(doDetection));
+		//detectionThread.IsBackground = true;
         trackingThread = new Thread(new ThreadStart(doColorTracking));
+		//trackingThread.IsBackground = true;
 		detectionThread.Start ();
 	}
 
@@ -52,20 +54,24 @@ public class SignDetector : MonoBehaviour
         NOTIF_ID = 0;
         //Debug.Log("Detector is now working...");
 		while(true){
+			Thread.Sleep(20);
             detectSigns(); //do the opencv function
             signID = getFoundSign();
             if (signID == 1)
             {
-                NOTIF_ID = 1;
+				Debug.Log ("Found "+ signID);
+				NOTIF_ID = 1;
                 Debug.Log("Thread: " + trackingThread.ThreadState);
                 //Debug.Log("Found = " + signID);
                 //enable autopilot HSV tracking
-                if (trackingThread.ThreadState == ThreadState.Unstarted ||
-                    trackingThread.ThreadState == ThreadState.Stopped)
+                if ((trackingThread.ThreadState == ThreadState.AbortRequested &&
+                    trackingThread.ThreadState == ThreadState.Stopped) ||
+				    trackingThread.ThreadState == ThreadState.Unstarted)
                 {
                     //Debug.Log("Starting tracker thread");
                     NOTIF_ID = 2;
                     trackingThread.Start();
+					Debug.Log ("Starting tracking thread");
                     //wait 5 sec so that the autopilot doesnt get (de)activated by the same sign
                     Thread.Sleep(5000);
                 }
@@ -85,28 +91,30 @@ public class SignDetector : MonoBehaviour
     {        
         //Debug.Log("About to do tracking...");
         while(true){
-            Thread.Sleep(2);
+            Thread.Sleep(20);
             doTracking(); //do the opencv function
             side = getHorizontalAxis();
-            if (side == -1)
-            {
-                //Debug.Log("Turning left");
-            }
-            else if (side == 1)
-            {
-                //Debug.Log("Turning right");
-            }
-            else if(side == 0)
-            {
-               // Debug.Log("Going straight");
-            }
         }
 
     }
 
     void Update(){
-        if (Input.GetKey(KeyCode.X))
-            OnApplicationQuit();
+        if (Input.GetKey (KeyCode.X)) {
+			Debug.Log("Killing tracker thread");
+			uiController.showText("Killing tracker thread");
+			trackingThread.Abort();
+			trackingThread = new Thread(new ThreadStart(doColorTracking));
+			side = -2;
+		}
+		if (Input.GetKey (KeyCode.Escape)) {
+			Debug.Log("Killing threads");
+			uiController.showText("Killing threads");
+			trackingThread.Abort();
+			detectionThread.Abort();
+			UnityEngine.Screen.lockCursor = false;
+			UnityEngine.Screen.showCursor = true; 
+			UnityEngine.Application.LoadLevel (0);
+		}
 
         if (side == -1)
         {
@@ -114,7 +122,7 @@ public class SignDetector : MonoBehaviour
         }
         else if (side == 1)
         {
-            SendKeys.Send("{RIGHT}");
+           SendKeys.Send("{RIGHT}");
         }
 
         if (side != -2)

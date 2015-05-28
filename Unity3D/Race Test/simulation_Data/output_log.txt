@@ -1,0 +1,81 @@
+Initialize engine version: 4.6.1f1 (d1db7a1b5196)
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 9.0c [aticfx32.dll 8.17.10.1099]
+    Renderer: AMD Radeon HD 7470M
+    Vendor:   ATI
+    VRAM:     1012 MB (via DXGI)
+    Caps:     Shader=30 DepthRT=1 NativeDepth=1 NativeShadow=1 DF16=1 INTZ=1 RAWZ=0 NULL=1 RESZ=1 SlowINTZ=1
+Default GameObject Tag: Player already registered
+ 
+(Filename:  Line: 67)
+
+Begin MonoManager ReloadAssembly
+Platform assembly: C:\Users\Public\Documents\Unity Projects\Race Test\simulation_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading C:\Users\Public\Documents\Unity Projects\Race Test\simulation_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: C:\Users\Public\Documents\Unity Projects\Race Test\simulation_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading C:\Users\Public\Documents\Unity Projects\Race Test\simulation_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: C:\Users\Public\Documents\Unity Projects\Race Test\simulation_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading C:\Users\Public\Documents\Unity Projects\Race Test\simulation_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: C:\Users\Public\Documents\Unity Projects\Race Test\simulation_Data\Managed\System.Windows.Forms.dll (this message is harmless)
+Loading C:\Users\Public\Documents\Unity Projects\Race Test\simulation_Data\Managed\System.Windows.Forms.dll into Unity Child Domain
+- Completed reload, in  0.080 seconds
+desktop: 1366x768 60Hz; virtual: 2806x900 at -1440,-132
+<RI> Initializing input.
+<RI> Input initialized.
+Platform assembly: C:\Users\Public\Documents\Unity Projects\Race Test\simulation_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: C:\Users\Public\Documents\Unity Projects\Race Test\simulation_Data\Managed\System.dll (this message is harmless)
+UnloadTime: 4.946355 ms
+Unloading 4 Unused Serialized files (Serialized files now loaded: 0 / Dirty serialized files: 0)
+
+Unloading 2 unused Assets to reduce memory usage. Loaded Objects now: 294.
+Total: 0.833540 ms (FindLiveObjects: 0.019187 ms CreateObjectMapping: 0.010709 ms MarkObjects: 0.160193 ms  DeleteObjects: 0.004908 ms)
+
+Found 1
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Thread: Unstarted
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Starting tracking thread
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Platform assembly: C:\Users\Public\Documents\Unity Projects\Race Test\simulation_Data\Managed\System.Drawing.dll (this message is harmless)
+Platform assembly: C:\Users\Public\Documents\Unity Projects\Race Test\simulation_Data\Managed\Accessibility.dll (this message is harmless)
+Platform assembly: C:\Users\Public\Documents\Unity Projects\Race Test\simulation_Data\Managed\Mono.Posix.dll (this message is harmless)
+Fallback handler could not load library C:/Users/Public/Documents/Unity Projects/Race Test/simulation_Data/Mono/libc
+Fallback handler could not load library C:/Users/Public/Documents/Unity Projects/Race Test/simulation_Data/Mono/.\libc
+Fallback handler could not load library C:/Users/Public/Documents/Unity Projects/Race Test/simulation_Data/Mono/libc
+Killing tracker thread
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Killing tracker thread
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Killing tracker thread
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Killing tracker thread
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Killing tracker thread
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+Killing threads
+ 
+(Filename: C:/BuildAgent/work/d63dfc6385190b60/artifacts/StandalonePlayerGenerated/UnityEngineDebug.cpp Line: 49)
+
+UnloadTime: 0.961605 ms
+Unloading 1 Unused Serialized files (Serialized files now loaded: 0 / Dirty serialized files: 0)
+
+Unloading 58 unused Assets to reduce memory usage. Loaded Objects now: 150.
+Total: 2.104376 ms (FindLiveObjects: 0.008924 ms CreateObjectMapping: 0.011601 ms MarkObjects: 0.248544 ms  DeleteObjects: 0.916983 ms)
+
