@@ -11,6 +11,7 @@ public class UIText : MonoBehaviour{
 
     void Awake()
     {
+		// Find text components to add text to them
         GameObject canvas = GameObject.Find("canvas");
         text1 = canvas.transform.FindChild("Text1").GetComponent<Text>();
         text2 = canvas.transform.FindChild("Text2").GetComponent<Text>();
@@ -24,11 +25,16 @@ public class UIText : MonoBehaviour{
         text3.text = texts[2];
     }
 
+	/// <summary>
+	/// Called by SignDetector, this displays a new message to the screen
+	/// </summary>
+	/// <param name="text">Text string to display on the UI</param>
     public void showText(string text)
     {
-        texts.Insert(2, String.Copy(texts[1]));
-        texts.Insert(1, String.Copy(texts[0]));
-        texts.Insert(0, text);
+		string tx1 = String.Copy(texts[0]), tx2 = String.Copy(texts[1]);
+        texts.Insert(2, tx2);
+        texts.Insert(1, tx1);
+        texts.Insert(0, String.Copy (text));
         text3.text = texts[2];       
         text2.text = texts[1];
         text1.text = texts[0];

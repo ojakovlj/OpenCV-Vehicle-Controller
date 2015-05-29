@@ -21,12 +21,9 @@ namespace CVDetector
 	class RoadTracker
 	{
 		public: 
-        // Returns -1 if failed, 0 if OK
-        static SIGNDETECTORSDLL_API int initialiseHSVTracker(); 
-
-        static SIGNDETECTORSDLL_API void runTracker(); 
+        static SIGNDETECTORSDLL_API void doTracking(); 
 
         // Returns Y coordinate of the center of the detected patch
-        static SIGNDETECTORSDLL_API int getAxis(); 
+        static SIGNDETECTORSDLL_API double getHorizontalAxis(); 
 	};
 }

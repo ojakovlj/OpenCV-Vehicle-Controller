@@ -10,9 +10,13 @@ using System.Windows.Forms;
 public class SignDetector : MonoBehaviour
 {
     Thread detectionThread, trackingThread;
-    UIText uiController;
-    int side = -2, NOTIF_ID = -1;
-    //Lets make our calls from the Plugin
+	UIText uiController;
+	Text textLimit;
+	static double side = -2.0;
+	float maxSpeed = 30.0f;
+	int NOTIF_ID = -1;
+
+    // Lets make our calls from the Plugin
     [DllImport("CVDetectorDLL", CallingConvention = CallingConvention.Cdecl, EntryPoint = @"?initialiseDetector@SignDetector@CVDetector@@SAHXZ")]
     private static extern int initialiseDetector();
     [DllImport("CVDetectorDLL", CallingConvention = CallingConvention.Cdecl, EntryPoint = @"?detectSigns@SignDetector@CVDetector@@SAXXZ")]
@@ -21,49 +25,46 @@ public class SignDetector : MonoBehaviour
     private static extern int getFoundSign();
     [DllImport("CVDetectorDLL", CallingConvention = CallingConvention.Cdecl, EntryPoint = @"?doTracking@RoadTracker@CVDetector@@SAXXZ")]
     private static extern int doTracking();
-    [DllImport("CVDetectorDLL", CallingConvention = CallingConvention.Cdecl, EntryPoint = @"?getHorizontalAxis@RoadTracker@CVDetector@@SAHXZ")]
-    private static extern int getHorizontalAxis();
+	[DllImport("CVDetectorDLL", CallingConvention = CallingConvention.Cdecl, EntryPoint = @"?getHorizontalAxis@RoadTracker@CVDetector@@SANXZ")]
+    private static extern double getHorizontalAxis();
 
 	void Start(){
         int retval;
         GameObject canvas = GameObject.Find("canvas");
-        retval = initialiseDetector(); //initialise detector variables
+		textLimit = canvas.transform.FindChild("Limit").GetComponent<Text>();
+		textLimit.text = "Speed limit: "+maxSpeed.ToString("0.00")+"km/h";
+		
+        retval = initialiseDetector(); // Initialise detector variables
 
         uiController = canvas.AddComponent<UIText>();
         if (retval == 0)
-        {
             uiController.showText("System init successful.");
-            //Debug.Log("System init successful.");
-        }
         else
-        {
-            uiController.showText("System init failed!");
-            //Debug.Log("System init failed!");
-        }
+            uiController.showText("System init failed!");          
 
         detectionThread = new Thread(new ThreadStart(doDetection));
-		//detectionThread.IsBackground = true;
         trackingThread = new Thread(new ThreadStart(doColorTracking));
-		//trackingThread.IsBackground = true;
+		// Start scanning for autopilot enable signs
 		detectionThread.Start ();
 	}
 
     int signID;
+	/// <summary>
+	/// Method corresponding to the detectionThread, calls DLL function getFoundSign()
+	/// </summary>
 	void doDetection(){
 
         NOTIF_ID = 0;
-        //Debug.Log("Detector is now working...");
 		while(true){
 			Thread.Sleep(20);
-            detectSigns(); //do the opencv function
-            signID = getFoundSign();
-            if (signID == 1)
+            detectSigns(); // Execute the opencv functions
+            signID = getFoundSign(); // Acquire function return value
+            if (signID == 1) // ENABLE sign is found
             {
 				Debug.Log ("Found "+ signID);
 				NOTIF_ID = 1;
                 Debug.Log("Thread: " + trackingThread.ThreadState);
-                //Debug.Log("Found = " + signID);
-                //enable autopilot HSV tracking
+                // Enable autopilot HSV tracking
                 if ((trackingThread.ThreadState == ThreadState.AbortRequested &&
                     trackingThread.ThreadState == ThreadState.Stopped) ||
 				    trackingThread.ThreadState == ThreadState.Unstarted)
@@ -89,24 +90,24 @@ public class SignDetector : MonoBehaviour
 	}
     void doColorTracking()
     {        
-        //Debug.Log("About to do tracking...");
         while(true){
             Thread.Sleep(20);
-            doTracking(); //do the opencv function
+            doTracking(); // Do the opencv functions
             side = getHorizontalAxis();
+			Debug.Log (getHorizontalAxis());
         }
 
     }
 
     void Update(){
-        if (Input.GetKey (KeyCode.X)) {
+        if (Input.GetKey (KeyCode.X)) { // X = kill tracker threads
 			Debug.Log("Killing tracker thread");
 			uiController.showText("Killing tracker thread");
 			trackingThread.Abort();
 			trackingThread = new Thread(new ThreadStart(doColorTracking));
 			side = -2;
 		}
-		if (Input.GetKey (KeyCode.Escape)) {
+		if (Input.GetKey (KeyCode.Escape)) { // Esc = return to main menu
 			Debug.Log("Killing threads");
 			uiController.showText("Killing threads");
 			trackingThread.Abort();
@@ -115,26 +116,26 @@ public class SignDetector : MonoBehaviour
 			UnityEngine.Screen.showCursor = true; 
 			UnityEngine.Application.LoadLevel (0);
 		}
-
-        if (side == -1)
-        {
-            SendKeys.Send("{LEFT}");
-        }
-        else if (side == 1)
-        {
-           SendKeys.Send("{RIGHT}");
-        }
-
-        if (side != -2)
+		if (Input.GetKey (KeyCode.I)) { // I = increase speed by 5 km/h
+			if (maxSpeed < 40.0f)
+				maxSpeed += 5.0f;
+			textLimit.text = "Speed limit: "+maxSpeed.ToString("0.00")+"km/h";
+		} 
+		if (Input.GetKey (KeyCode.K)){ // D = decrease speed by 5 km/h
+			if (maxSpeed > 10.0f)
+				maxSpeed -= 5.0f;
+			textLimit.text = "Speed limit: "+maxSpeed.ToString("0.00")+"km/h";
+		}	
+        if (side != -2) // Tracking is not active, do not guard the speed
         {
             CarController controller = GetComponent<CarController>();
-            if (controller.speed < 17.0)
+            if (controller.speed < maxSpeed-3)
                 SendKeys.Send("{UP}");
-            if (controller.speed > 20.0)
+            if (controller.speed > maxSpeed)
                 SendKeys.Send("{DOWN}");
         }
 
-        //Debug.Log("Thread: " + trackingThread.ThreadState);
+        // Event based UI text output
         switch (NOTIF_ID)
         {
             case 0: uiController.showText("Detector is now working...");
@@ -152,6 +153,15 @@ public class SignDetector : MonoBehaviour
             default: break;
         }
     }
+
+	/// <summary>
+	/// Getter method used by CarController to find out which way to turn the vehicle
+	/// </summary>
+	/// <returns>The interpolated axis in range [-1, 1] where -1 means turn full left and
+	/// +1 means turn full right</returns>
+	public static double getAxis(){
+		return side;
+	}
 
     void OnApplicationQuit()
     {

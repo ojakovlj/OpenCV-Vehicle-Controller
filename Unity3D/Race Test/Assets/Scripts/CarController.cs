@@ -47,11 +47,9 @@ public class CarController : MonoBehaviour {
 	}
 
 	void FixedUpdate () {
-
-		//if(speedText!=null)
-			//speedText.text = "Speed: " + Speed().ToString("f0") + " km/h";
+        // Calculate and display speed to GUI
         speed =  -(wheelRR.radius * Mathf.PI * wheelRR.rpm * 60f / 1000f);
-		TextField.text = "Speed: " +speed + "km/h    RPM: " + wheelRL.rpm;
+		TextField.text = "Speed: " +speed.ToString("0.00") + "km/h    RPM: " + (-wheelRL.rpm);
 
 		float scaledTorque =-Input.GetAxis("Vertical") * torque;
 
@@ -60,17 +58,25 @@ public class CarController : MonoBehaviour {
 		else 
 			scaledTorque = Mathf.Lerp(scaledTorque, 0,  (wheelRL.rpm-idealRPM) / (maxRPM-idealRPM) );
 
-		DoRollBar(wheelFR, wheelFL);
+        // Counter the inertial forces on the vehicle by adding force to springs
+		DoRollBar(wheelFR, wheelFL); 
 		DoRollBar(wheelRR, wheelRL);
 
-		wheelFR.steerAngle = Input.GetAxis("Horizontal") * turnRadius;
-		wheelFL.steerAngle = Input.GetAxis("Horizontal") * turnRadius;
+        // Get user input for turning or, if autopilot is active, axis value from DLL
+		if (SignDetector.getAxis () == -2.0) {
+			wheelFR.steerAngle = Input.GetAxis ("Horizontal") * turnRadius;
+			wheelFL.steerAngle = Input.GetAxis ("Horizontal") * turnRadius;
+		} else {
+			wheelFR.steerAngle = (float)SignDetector.getAxis() * turnRadius;
+			wheelFL.steerAngle = (float)SignDetector.getAxis() * turnRadius;
+		}
 
+        // Set torque to drive-wheels
 		wheelFR.motorTorque = driveMode==DriveMode.Rear  ? 0 : scaledTorque;
 		wheelFL.motorTorque = driveMode==DriveMode.Rear  ? 0 : scaledTorque;
 		wheelRR.motorTorque = driveMode==DriveMode.Front ? 0 : scaledTorque;
 		wheelRL.motorTorque = driveMode==DriveMode.Front ? 0 : scaledTorque;
-
+        // If brakes are active, apply brakeTorque
 		if(Input.GetButton("Fire1")) {
 			wheelFR.brakeTorque = brakeTorque;
 			wheelFL.brakeTorque = brakeTorque;
@@ -90,11 +96,6 @@ public class CarController : MonoBehaviour {
 	void rotateWheels(){
 		float rotationX = wheelFL.rpm / 6f;
 		totalRotation = (totalRotation + rotationX) % 360f;
-		Quaternion currRot = front_left_wheel.transform.localRotation;
-
-		/*Debug.Log ("Angles: "+ currRot.x*180/Mathf.PI +"," +
-		           currRot.y*180/Mathf.PI+","+
-		           currRot.z*180/Mathf.PI);*/
 
 		//front_left_wheel.transform.localRotation = Quaternion.Euler(0, 0, 0);
 		//front_left_wheel.transform.Rotate(rotationX+currRot.x*360/Mathf.PI, wheelFL.steerAngle, currRot.z);
